@@ -9,24 +9,28 @@ provisioning and **Ansible** for configuration management, delivering:
 - PostgreSQL on EC2 with remote access
 - Load balancing, SSL (Let's Encrypt), and DNS via GoDaddy domain
 
+---
+
+## Project Structure
+
 DXO-Technical-Assignment/
 ├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
+│   ├── main.tf               # AWS infrastructure provisioning
+│   ├── variables.tf          # Input variables for Terraform
+│   └── outputs.tf            # Terraform output values (e.g., public IPs)
 ├── ansible/
-│   ├── inventory.yml
-│   ├── site.yml
+│   ├── inventory.yml         # Host inventory for Ansible (web, db)
+│   ├── site.yml              # Main Ansible playbook
 │   └── roles/
-│       ├── webserver/
-│       ├── database/
-│       ├── ssl/
-│       └── selfhealing/
+│       ├── webserver/        # Nginx setup and configuration
+│       ├── database/         # PostgreSQL provisioning and seeding
+│       ├── ssl/              # Let's Encrypt SSL certificate automation
+│       └── selfhealing/      # Systemd-based self-healing service setup
 ├── scripts/
-│   └── bootstrap.sh
+│   └── bootstrap.sh          # EC2 initialization script (cloud-init style)
 ├── .ssh/
-│   └── dxo-key.pem
-└── README.md
+│   └── dxo-key.pem           # SSH private key for EC2 access
+└── README.md                 # Full project documentation
 
 ---
 
