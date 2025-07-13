@@ -66,7 +66,7 @@ provisioning and **Ansible** for configuration management, delivering:
 ## 🔧 Deployment Steps
 
 ### 1. Clone the Project
-git clone https://github.com/your-org/your-repo.git
+git clone https://github.com/MRedaM/dxo-technical-assignment.git
 
 
 DXO-Technical-Assignment/
