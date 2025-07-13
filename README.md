@@ -9,6 +9,25 @@ provisioning and **Ansible** for configuration management, delivering:
 - PostgreSQL on EC2 with remote access
 - Load balancing, SSL (Let's Encrypt), and DNS via GoDaddy domain
 
+DXO-Technical-Assignment/
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+├── ansible/
+│   ├── inventory.yml
+│   ├── site.yml
+│   └── roles/
+│       ├── webserver/
+│       ├── database/
+│       ├── ssl/
+│       └── selfhealing/
+├── scripts/
+│   └── bootstrap.sh
+├── .ssh/
+│   └── dxo-key.pem
+└── README.md
+
 ---
 
 ## 🛠️ Tech Stack
@@ -63,29 +82,5 @@ provisioning and **Ansible** for configuration management, delivering:
 
 ---
 
-## 🔧 Deployment Steps
-
-### 1. Clone the Project
+### Clone the Project
 git clone https://github.com/MRedaM/dxo-technical-assignment.git
-
-
-DXO-Technical-Assignment/
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
-├── ansible/
-│   ├── inventory.yml
-│   ├── site.yml
-│   └── roles/
-│       ├── webserver/
-│       ├── database/
-│       ├── ssl/
-│       └── selfhealing/
-├── scripts/
-│   └── bootstrap.sh
-├── .ssh/
-│   └── dxo-key.pem
-└── README.md
-
-
