@@ -1,0 +1,34 @@
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Ensure Nginx is enabled and running
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Install PostgreSQL client
+  apt:
+    name: postgresql-client
+    state: present
+
+- name: Fetch DB content
+  shell: |
+    PGPASSWORD=postgres psql -h {{ hostvars['db'].ansible_host }} -U postgres -d mydb -c "SELECT content FROM mytable;" -t
+  register: db_output
+
+- name: Create index.html with dynamic content
+  copy:
+    dest: /var/www/html/index.html
+    content: |
+      <html>
+      <body>
+      <h1>Hello World from {{ inventory_hostname }}</h1>
+      <p>{{ db_output.stdout }}</p>
+      </body>
+      </html>
+

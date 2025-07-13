@@ -1,0 +1,39 @@
+---
+- name: Install PostgreSQL and dependencies
+  apt:
+    name:
+      - postgresql
+      - python3-psycopg2
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure PostgreSQL is running
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Ensure database 'mydb' exists
+  community.postgresql.postgresql_db:
+    name: mydb
+    login_unix_socket: /var/run/postgresql
+    login_user: postgres
+  become: true
+
+- name: Ensure table 'mytable' exists in 'mydb'
+  community.postgresql.postgresql_query:
+    db: mydb
+    query: "CREATE TABLE IF NOT EXISTS mytable (content TEXT);"
+    login_unix_socket: /var/run/postgresql
+    login_user: postgres
+  become: true
+
+- name: Insert test row into 'mytable'
+  community.postgresql.postgresql_query:
+    db: mydb
+    query: "INSERT INTO mytable (content) VALUES ('Hello from DXO');"
+    login_unix_socket: /var/run/postgresql
+    login_user: postgres
+  become: true
+

@@ -1,0 +1,32 @@
+---
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  roles:
+    - webserver
+
+- name: Configure database server
+  hosts: dbservers
+  become: yes
+  roles:
+    - database
+
+- name: Step 1 - Provision DB instance and database
+  hosts: db
+  become: true
+  gather_facts: yes
+
+  collections:
+    - community.postgresql
+
+  roles:
+    - database
+
+- name: Step 2 - Configure web servers after DB is ready
+  hosts: web
+  become: true
+  gather_facts: yes
+
+  roles:
+    - webserver
+
