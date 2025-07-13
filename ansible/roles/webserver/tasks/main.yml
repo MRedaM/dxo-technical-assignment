@@ -32,3 +32,24 @@
       </body>
       </html>
 
+- name: Ensure directory for Nginx override exists
+  file:
+    path: /etc/systemd/system/nginx.service.d
+    state: directory
+    mode: '0755'
+
+- name: Configure systemd to auto-restart Nginx on failure
+  copy:
+    dest: /etc/systemd/system/nginx.service.d/override.conf
+    content: |
+      [Service]
+      Restart=on-failure
+      RestartSec=5
+  notify: Reload systemd
+
+- name: Ensure Nginx is enabled and started
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
