@@ -53,3 +53,55 @@
     state: started
     enabled: yes
 
+- name: Install OpenSSL
+  apt:
+    name: openssl
+    state: present
+    update_cache: yes
+
+- name: Create directory for SSL cert
+  file:
+    path: /etc/nginx/ssl
+    state: directory
+    mode: '0755'
+
+- name: Generate self-signed SSL certificate
+  command: >
+    openssl req -x509 -nodes -days 365
+    -newkey rsa:2048
+    -keyout /etc/nginx/ssl/selfsigned.key
+    -out /etc/nginx/ssl/selfsigned.crt
+    -subj "/C=US/ST=VA/L=Local/O=DXO/CN={{ inventory_hostname }}"
+  args:
+    creates: /etc/nginx/ssl/selfsigned.crt
+
+- name: Configure Nginx for HTTPS with redirect from HTTP
+  copy:
+    dest: /etc/nginx/sites-available/default
+    content: |
+      server {
+          listen 80 default_server;
+          listen [::]:80 default_server;
+          return 301 https://$host$request_uri;
+      }
+
+      server {
+          listen 443 ssl default_server;
+          listen [::]:443 ssl default_server;
+
+          ssl_certificate     /etc/nginx/ssl/selfsigned.crt;
+          ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
+
+          root /var/www/html;
+          index index.html;
+
+          location / {
+              try_files $uri $uri/ =404;
+          }
+      }
+
+- name: Reload Nginx to apply SSL changes
+  service:
+    name: nginx
+    state: restarted
+
