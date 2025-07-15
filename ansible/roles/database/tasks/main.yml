@@ -13,7 +13,9 @@
     state: started
     enabled: yes
 
-- name: Set local access for postgres user to trust in pg_hba.conf
+# ------------------ TEMPORARILY ALLOW TRUST ------------------
+
+- name: Set local access for postgres user to trust
   lineinfile:
     path: /etc/postgresql/14/main/pg_hba.conf
     regexp: '^local\s+all\s+postgres\s+\w+'
@@ -21,7 +23,7 @@
     state: present
   notify: Restart PostgreSQL
 
-- name: Set local access for all users to trust in pg_hba.conf
+- name: Set local access for all users to trust
   lineinfile:
     path: /etc/postgresql/14/main/pg_hba.conf
     regexp: '^local\s+all\s+all\s+\w+'
@@ -29,7 +31,7 @@
     state: present
   notify: Restart PostgreSQL
 
-- name: Allow internal VPC IPs to access PostgreSQL
+- name: Allow internal VPC IPs to access PostgreSQL using trust
   lineinfile:
     path: /etc/postgresql/14/main/pg_hba.conf
     insertafter: '^# IPv4 local connections:'
@@ -45,31 +47,75 @@
     state: present
   notify: Restart PostgreSQL
 
-- name: Restart PostgreSQL to apply trust authentication
+- name: Restart PostgreSQL to apply trust temporarily
   service:
     name: postgresql
     state: restarted
+
+# ------------------ SET PASSWORD USING PSQL ------------------
+
+- name: Set postgres user password using psql
+  shell: |
+    sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '{{ postgres_password }}';"
+  args:
+    executable: /bin/bash
+
+# ------------------ SWITCH TO MD5 AUTH ------------------
+
+- name: Set local access for postgres user to md5
+  lineinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    regexp: '^local\s+all\s+postgres\s+\w+'
+    line: 'local   all   postgres   md5'
+    state: present
+  notify: Restart PostgreSQL
+
+- name: Set local access for all users to md5
+  lineinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    regexp: '^local\s+all\s+all\s+\w+'
+    line: 'local   all   all   md5'
+    state: present
+  notify: Restart PostgreSQL
+
+- name: Allow internal VPC IPs to access PostgreSQL using md5
+  lineinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    regexp: '^host\s+all\s+all\s+10\.0\.0\.0/16\s+\w+'
+    line: 'host    all             all             10.0.0.0/16            md5'
+    state: present
+  notify: Restart PostgreSQL
+
+- name: Restart PostgreSQL to apply md5 authentication
+  service:
+    name: postgresql
+    state: restarted
+
+# ------------------ CONTINUE WITH DB SETUP ------------------
 
 - name: Ensure database 'mydb' exists
   community.postgresql.postgresql_db:
     name: mydb
     state: present
     login_user: postgres
-    login_unix_socket: /var/run/postgresql
+    login_password: "{{ postgres_password }}"
+    login_host: localhost
 
 - name: Ensure table 'mytable' exists in 'mydb'
   community.postgresql.postgresql_query:
     db: mydb
     query: "CREATE TABLE IF NOT EXISTS mytable (content TEXT);"
     login_user: postgres
-    login_unix_socket: /var/run/postgresql
+    login_password: "{{ postgres_password }}"
+    login_host: localhost
 
 - name: Check if 'mytable' already has rows
   community.postgresql.postgresql_query:
     db: mydb
     query: "SELECT COUNT(*) FROM mytable;"
     login_user: postgres
-    login_unix_socket: /var/run/postgresql
+    login_password: "{{ postgres_password }}"
+    login_host: localhost
   register: row_count
 
 - name: Insert a test row only if table is empty
@@ -77,5 +123,6 @@
     db: mydb
     query: "INSERT INTO mytable (content) VALUES ('Hello World From DXO Technical Assignment');"
     login_user: postgres
-    login_unix_socket: /var/run/postgresql
+    login_password: "{{ postgres_password }}"
+    login_host: localhost
   when: row_count.query_result[0].count | int == 0

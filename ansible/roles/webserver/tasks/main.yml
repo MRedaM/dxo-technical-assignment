@@ -16,7 +16,8 @@
 
 - name: Fetch DB content using private IP
   shell: >
-    PGPASSWORD=postgres psql -h {{ hostvars['db'].private_ip }} -U postgres -d mydb -c "SELECT content FROM mytable;" -t
+    PGPASSWORD={{ postgres_password }} psql -h {{ hostvars['db'].private_ip }}
+    -U postgres -d mydb -c "SELECT content FROM mytable;" -t
   register: db_output
   changed_when: false
   failed_when: db_output.rc != 0
