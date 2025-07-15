@@ -43,6 +43,6 @@ done
 
 echo "Running Ansible playbook..."
 cd "$ANSIBLE_DIR"
-ansible-playbook playbook.yml -i inventory.yml
+ansible-playbook playbook.yml -i inventory.yml --ask-vault-pass
 
 echo "Deployment complete!"
