@@ -3,15 +3,18 @@ import json
 import os
 import yaml
 
+# Get the absolute path to the project root
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+TERRAFORM_DIR = os.path.join(PROJECT_ROOT, "terraform")
+ANSIBLE_DIR = os.path.join(PROJECT_ROOT, "ansible")
+
 # Move to terraform directory
-os.chdir("terraform")
+os.chdir(TERRAFORM_DIR)
 
 # Get terraform output
 output = os.popen("terraform output -json").read()
 tf = json.loads(output)
-
-# Return to root directory
-os.chdir("..")
 
 # Build Ansible inventory structure
 inventory = {
@@ -36,7 +39,8 @@ inventory = {
 }
 
 # Write to ansible inventory
-with open("ansible/inventory.yml", "w") as f:
+inventory_file = os.path.join(ANSIBLE_DIR, "inventory.yml")
+with open(inventory_file, "w") as f:
     yaml.dump(inventory, f, default_flow_style=False)
 
-print("✅ Inventory written to ansible/inventory.yml")
+print("Inventory written to ansible/inventory.yml")
