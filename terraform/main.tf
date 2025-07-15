@@ -23,7 +23,6 @@ resource "aws_subnet" "public_a" {
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
-
   tags = {
     Name = "${var.project_name}-subnet-a"
   }
@@ -34,7 +33,6 @@ resource "aws_subnet" "public_b" {
   cidr_block              = "10.0.2.0/24"
   availability_zone       = "us-east-1b"
   map_public_ip_on_launch = true
-
   tags = {
     Name = "${var.project_name}-subnet-b"
   }
@@ -42,7 +40,6 @@ resource "aws_subnet" "public_b" {
 
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
-
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
@@ -59,25 +56,22 @@ resource "aws_route_table_association" "public_b" {
   route_table_id = aws_route_table.public_rt.id
 }
 
-# Web Server SG
 resource "aws_security_group" "web_sg" {
   name   = "${var.project_name}-web-sg"
   vpc_id = aws_vpc.main.id
 
   ingress {
-    description = "Allow HTTPS from anywhere (LB)"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # You can restrict this later
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    description = "Allow SSH from your IP"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["78.45.154.248/32"] # Replace with your IP
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -88,17 +82,22 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
-# DB Server SG
 resource "aws_security_group" "db_sg" {
   name   = "${var.project_name}-db-sg"
   vpc_id = aws_vpc.main.id
 
   ingress {
-    description = "Postgres access from web servers"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
     security_groups = [aws_security_group.web_sg.id]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -109,7 +108,6 @@ resource "aws_security_group" "db_sg" {
   }
 }
 
-# Web Server 1
 resource "aws_instance" "web1" {
   ami                         = var.ami
   instance_type               = var.instance_type
@@ -122,7 +120,6 @@ resource "aws_instance" "web1" {
   }
 }
 
-# Web Server 2
 resource "aws_instance" "web2" {
   ami                         = var.ami
   instance_type               = var.instance_type
@@ -135,7 +132,6 @@ resource "aws_instance" "web2" {
   }
 }
 
-# PostgreSQL Server
 resource "aws_instance" "db" {
   ami                         = var.ami
   instance_type               = var.instance_type
@@ -148,13 +144,11 @@ resource "aws_instance" "db" {
   }
 }
 
-# ALB SG
 resource "aws_security_group" "alb_sg" {
   name   = "${var.project_name}-alb-sg"
   vpc_id = aws_vpc.main.id
 
   ingress {
-    description = "Allow HTTPS from anywhere"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -169,7 +163,6 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# Load Balancer
 resource "aws_lb" "app_lb" {
   name               = "${var.project_name}-alb"
   internal           = false
@@ -178,12 +171,12 @@ resource "aws_lb" "app_lb" {
   subnets            = [aws_subnet.public_a.id, aws_subnet.public_b.id]
 }
 
-# Target Group
 resource "aws_lb_target_group" "web_tg" {
   name     = "${var.project_name}-tg"
   port     = 443
   protocol = "HTTPS"
   vpc_id   = aws_vpc.main.id
+
   health_check {
     path                = "/"
     protocol            = "HTTPS"
@@ -195,7 +188,6 @@ resource "aws_lb_target_group" "web_tg" {
   }
 }
 
-# Register EC2s in Target Group
 resource "aws_lb_target_group_attachment" "web1_attach" {
   target_group_arn = aws_lb_target_group.web_tg.arn
   target_id        = aws_instance.web1.id
@@ -208,7 +200,6 @@ resource "aws_lb_target_group_attachment" "web2_attach" {
   port             = 443
 }
 
-# Listener
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.app_lb.arn
   port              = 443
@@ -221,9 +212,4 @@ resource "aws_lb_listener" "https" {
 
   ssl_policy      = "ELBSecurityPolicy-2016-08"
   certificate_arn = var.certificate_arn
-}
-
-
-variable "certificate_arn" {
-  description = "ACM certificate for domain"
 }

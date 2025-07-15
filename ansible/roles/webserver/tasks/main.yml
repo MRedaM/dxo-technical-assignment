@@ -1,7 +1,10 @@
 ---
-- name: Install Nginx
+- name: Install required packages
   apt:
-    name: nginx
+    name:
+      - nginx
+      - postgresql-client
+      - openssl
     state: present
     update_cache: yes
 
@@ -11,34 +14,32 @@
     state: started
     enabled: yes
 
-- name: Install PostgreSQL client
-  apt:
-    name: postgresql-client
-    state: present
-
-- name: Fetch DB content
-  shell: |
-    PGPASSWORD=postgres psql -h {{ hostvars['db'].ansible_host }} -U postgres -d mydb -c "SELECT content FROM mytable;" -t
+- name: Fetch DB content using private IP
+  shell: >
+    PGPASSWORD=postgres psql -h {{ hostvars['db'].private_ip }} -U postgres -d mydb -c "SELECT content FROM mytable;" -t
   register: db_output
+  changed_when: false
+  failed_when: db_output.rc != 0
 
-- name: Create index.html with dynamic content
+- name: Create dynamic index.html
   copy:
     dest: /var/www/html/index.html
     content: |
       <html>
+      <head><title>DXO</title></head>
       <body>
-      <h1>Hello World from {{ inventory_hostname }}</h1>
-      <p>{{ db_output.stdout }}</p>
+        <h1>Hello from {{ inventory_hostname }}</h1>
+        <p>{{ db_output.stdout }}</p>
       </body>
       </html>
 
-- name: Ensure directory for Nginx override exists
+- name: Ensure systemd override directory exists
   file:
     path: /etc/systemd/system/nginx.service.d
     state: directory
     mode: '0755'
 
-- name: Configure systemd to auto-restart Nginx on failure
+- name: Set systemd override to auto-restart Nginx
   copy:
     dest: /etc/systemd/system/nginx.service.d/override.conf
     content: |
@@ -47,25 +48,19 @@
       RestartSec=5
   notify: Reload systemd
 
-- name: Ensure Nginx is enabled and started
+- name: Ensure Nginx is enabled and running (again, just in case)
   service:
     name: nginx
     state: started
     enabled: yes
 
-- name: Install OpenSSL
-  apt:
-    name: openssl
-    state: present
-    update_cache: yes
-
-- name: Create directory for SSL cert
+- name: Create directory for SSL
   file:
     path: /etc/nginx/ssl
     state: directory
     mode: '0755'
 
-- name: Generate self-signed SSL certificate
+- name: Generate self-signed SSL cert and key
   command: >
     openssl req -x509 -nodes -days 365
     -newkey rsa:2048
@@ -75,7 +70,7 @@
   args:
     creates: /etc/nginx/ssl/selfsigned.crt
 
-- name: Configure Nginx for HTTPS with redirect from HTTP
+- name: Configure Nginx to redirect HTTP to HTTPS and serve index
   copy:
     dest: /etc/nginx/sites-available/default
     content: |
@@ -100,8 +95,7 @@
           }
       }
 
-- name: Reload Nginx to apply SSL changes
+- name: Restart Nginx to apply new config
   service:
     name: nginx
     state: restarted
-
