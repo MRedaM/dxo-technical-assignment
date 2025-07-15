@@ -28,7 +28,7 @@
       <html>
       <head><title>DXO</title></head>
       <body>
-        <h1>Hello from {{ inventory_hostname }}</h1>
+        <h1>Hello World From {{ inventory_hostname }}</h1>
         <p>{{ db_output.stdout }}</p>
       </body>
       </html>

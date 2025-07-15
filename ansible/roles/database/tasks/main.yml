@@ -75,7 +75,7 @@
 - name: Insert a test row only if table is empty
   community.postgresql.postgresql_query:
     db: mydb
-    query: "INSERT INTO mytable (content) VALUES ('Hello from DXO');"
+    query: "INSERT INTO mytable (content) VALUES ('Hello World From DXO Technical Assignment');"
     login_user: postgres
     login_unix_socket: /var/run/postgresql
   when: row_count.query_result[0].count | int == 0
