@@ -6,4 +6,4 @@
 *.key
 *.log
 *.bak
-vault_pass.txt
+.ansible/vault_pass.txt
