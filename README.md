@@ -97,7 +97,7 @@ DXO-Technical-Assignment/
 ---
 
 
-## 🔐 Using Ansible Vault
+## Using Ansible Vault
 
 - Store your vault password in: `~/.ansible/vault_pass.txt`
 - Encrypt secrets:
