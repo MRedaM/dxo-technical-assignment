@@ -25,7 +25,7 @@ DXO-Technical-Assignment/
 │   ├── inventory.yml              # Auto-generated inventory (via Python)
 │   ├── playbook.yml               # Main playbook
 │   ├── group_vars/
-│   │   └── db/
+│   │   └── all/
 │   │       └── vault.yml          # PostgreSQL credentials (encrypted)
 │   └── roles/
 │       ├── database/              # PostgreSQL installation & setup
